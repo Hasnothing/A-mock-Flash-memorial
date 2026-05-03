@@ -503,6 +503,124 @@
             font-weight: 600;
         }
 
+        /* ===== FLOWER LAYING ANIMATION ===== */
+        .flower-section {
+            position: relative;
+            margin-top: 40px;
+            text-align: center;
+        }
+
+        .flower-section .place-flower-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, #ff6b9d, #c44569);
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(196, 69, 105, 0.4);
+            letter-spacing: 1px;
+        }
+
+        .flower-section .place-flower-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(196, 69, 105, 0.6);
+        }
+
+        .flower-section .place-flower-btn:active {
+            transform: scale(0.95);
+        }
+
+        .flower-section .flower-count {
+            color: #999;
+            font-size: 0.9rem;
+            margin-top: 10px;
+            display: block;
+        }
+
+        .flower-section .flower-count span {
+            color: #ff6b9d;
+            font-weight: 700;
+        }
+
+        /* Floating flower that animates down */
+        .floating-flower {
+            position: fixed;
+            font-size: 2rem;
+            pointer-events: none;
+            z-index: 999;
+            animation: flowerDrop 1.5s ease-in forwards;
+            filter: drop-shadow(0 0 8px rgba(255, 107, 157, 0.5));
+        }
+
+        @keyframes flowerDrop {
+            0% {
+                opacity: 1;
+                transform: translateY(0) rotate(0deg) scale(1);
+            }
+            60% {
+                opacity: 1;
+                transform: translateY(80vh) rotate(180deg) scale(1.1);
+            }
+            100% {
+                opacity: 0;
+                transform: translateY(100vh) rotate(360deg) scale(0.5);
+            }
+        }
+
+        /* Accumulated flowers at the base of the tombstone */
+        .flower-bed {
+            position: relative;
+            min-height: 40px;
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 2px;
+            padding: 5px;
+        }
+
+        .flower-bed .placed-flower {
+            font-size: 1.6rem;
+            display: inline-block;
+            animation: flowerBloom 0.5s ease-out;
+            transition: transform 0.3s ease;
+            cursor: default;
+        }
+
+        .flower-bed .placed-flower:hover {
+            transform: scale(1.3) rotate(10deg);
+        }
+
+        @keyframes flowerBloom {
+            0% {
+                transform: scale(0) rotate(-30deg);
+                opacity: 0;
+            }
+            60% {
+                transform: scale(1.3) rotate(10deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+        }
+
+        /* Ground / grass strip below tombstone */
+        .tombstone-ground {
+            width: 100%;
+            height: 8px;
+            background: linear-gradient(90deg, #2d5a27, #3a7a33, #2d5a27);
+            border-radius: 0 0 10px 10px;
+            margin-top: -1px;
+            position: relative;
+            z-index: 1;
+        }
+
         /* ===== FOOTER ===== */
         footer {
             position: relative;
@@ -807,6 +925,16 @@
             </div>
             <div class="dates-bottom">1996 ✦ 2020</div>
         </div>
+
+        <!-- Tombstone ground (grass strip) -->
+        <div class="tombstone-ground"></div>
+
+        <!-- ===== FLOWER LAYING ===== -->
+        <div class="flower-section">
+            <button class="place-flower-btn" onclick="placeFlower()">🌸 Lay a Flower</button>
+            <span class="flower-count">💐 <span id="flowerCount">0</span> flowers laid in memory</span>
+            <div class="flower-bed" id="flowerBed"></div>
+        </div>
     </section>
 
     <!-- ===== FOOTER ===== -->
@@ -962,7 +1090,65 @@
         })();
 
         // =============================================
-        // 3. SMOOTH SCROLL FOR NAV
+        // 3. FLOWER LAYING ANIMATION
+        // =============================================
+        const flowerEmojis = ['🌸', '🌺', '🌹', '🌷', '🌻', '💐', '🌼', '🌿', '🌸', '🌸'];
+        let flowerCount = 0;
+
+        function placeFlower() {
+            // Pick a random flower emoji
+            const flower = flowerEmojis[Math.floor(Math.random() * flowerEmojis.length)];
+            const btn = document.querySelector('.place-flower-btn');
+
+            // 1. Create a floating flower that drops from the button
+            const floating = document.createElement('div');
+            floating.className = 'floating-flower';
+            floating.textContent = flower;
+            const rect = btn.getBoundingClientRect();
+            floating.style.left = (rect.left + rect.width / 2 - 16) + 'px';
+            floating.style.top = (rect.top - 20) + 'px';
+            // Random horizontal drift
+            const drift = (Math.random() - 0.5) * 120;
+            floating.style.setProperty('--drift', drift + 'px');
+            floating.style.animation = `flowerDrop 1.8s ease-in forwards`;
+            // Add slight horizontal drift
+            floating.animate([
+                { transform: `translateY(0) rotate(0deg) scale(1) translateX(0)` },
+                { transform: `translateY(80vh) rotate(180deg) scale(1.1) translateX(${drift}px)` },
+                { transform: `translateY(100vh) rotate(360deg) scale(0.5) translateX(${drift * 1.5}px)` }
+            ], { duration: 1800, easing: 'ease-in', fill: 'forwards' });
+            document.body.appendChild(floating);
+            setTimeout(() => floating.remove(), 2000);
+
+            // 2. Add flower to the flower bed
+            const flowerBed = document.getElementById('flowerBed');
+            const placed = document.createElement('span');
+            placed.className = 'placed-flower';
+            placed.textContent = flower;
+            flowerBed.appendChild(placed);
+
+            // 3. Update count
+            flowerCount++;
+            document.getElementById('flowerCount').textContent = flowerCount;
+
+            // 4. Scroll the flower bed into view if it's off screen
+            setTimeout(() => {
+                const bedRect = flowerBed.getBoundingClientRect();
+                if (bedRect.bottom > window.innerHeight) {
+                    flowerBed.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
+            }, 300);
+        }
+
+        // Auto-place a few flowers when the page loads
+        setTimeout(() => {
+            placeFlower();
+            setTimeout(() => placeFlower(), 500);
+            setTimeout(() => placeFlower(), 1200);
+        }, 1500);
+
+        // =============================================
+        // 4. SMOOTH SCROLL FOR NAV
         // =============================================
         document.querySelectorAll('nav a').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
